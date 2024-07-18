@@ -11,10 +11,12 @@ import {
   Platform,
   Linking,
   TextInput,
+  TouchableOpacity,
 } from 'react-native';
-import {Header, Colors} from 'react-native/Libraries/NewAppScreen';
+import { Header, Colors } from 'react-native/Libraries/NewAppScreen';
 import RNCalendarEvents from 'react-native-calendar-events';
 import moment from 'moment';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export const addToIosCalendar = async (
   title: string,
@@ -22,29 +24,29 @@ export const addToIosCalendar = async (
   endDate: any,
   location: string,
   url: string
- ) => {
-    // iOS: Requires # of seconds from January 1 2001 of the date you want to open calendar on
-    const referenceDate = moment.utc('2001-01-01');
-    const secondsSinceRefDateiOS = startDate - referenceDate.unix();
-      try {
-         await RNCalendarEvents.requestPermissions(false);
-         await RNCalendarEvents.checkPermissions(true);
-         await RNCalendarEvents.saveEvent(title, {
-              startDate: startDate.toISOString(),
-              endDate: endDate.toISOString(),
-              location: location,
-              notes: title,
-              url: url,
-              alarms: [
-                   {date: startDate.toISOString() - 6000},
-                ],
-       });
-     Linking.openURL(`calshow:${secondsSinceRefDateiOS}`);
-    } catch (error) {
-      //  showMessage(calendarIosFail);
-       return null;
-    }
- };
+) => {
+  // iOS: Requires # of seconds from January 1 2001 of the date you want to open calendar on
+  const referenceDate = moment.utc('2001-01-01');
+  const secondsSinceRefDateiOS = startDate - referenceDate.unix();
+  try {
+    await RNCalendarEvents.requestPermissions(false);
+    await RNCalendarEvents.checkPermissions(true);
+    await RNCalendarEvents.saveEvent(title, {
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      location: location,
+      notes: title,
+      url: url,
+      alarms: [
+        { date: startDate.toISOString() - 6000 },
+      ],
+    });
+    Linking.openURL(`calshow:${secondsSinceRefDateiOS}`);
+  } catch (error) {
+    //  showMessage(calendarIosFail);
+    return null;
+  }
+};
 
 const fetchAllEvents = async (startDate, endDate) => {
   try {
@@ -64,6 +66,7 @@ const fetchAllEvents = async (startDate, endDate) => {
       endDate.toISOString(),
       calendarIds
     );
+    console.log(JSON.stringify(events));
 
     return events;
   } catch (error) {
@@ -145,10 +148,15 @@ const App: () => React$Node = () => {
   const [title, setTitle] = useState('');
   const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date(new Date().getTime() + 60 * 60 * 1000));
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+
 
   const handleFetchEvents = async () => {
     const startDate = moment().add(-1, 'days').endOf('day');
-    const endDate = moment().add(1000, 'days').endOf('day');
+    const endDate = moment().add(250, 'days').endOf('day');
     const fetchedEvents = await fetchAllEvents(startDate, endDate);
     setEvents(fetchedEvents);
     Alert.alert('Events Fetched', `Found ${fetchedEvents.length} events`);
@@ -216,6 +224,46 @@ const App: () => React$Node = () => {
     setLocation('');
     setNotes('');
   };
+  const onChangeDate = (event, selectedDate, isStartDate) => {
+    const currentDate = selectedDate || (isStartDate ? startDate : endDate);
+    if (Platform.OS === 'android') {
+      setShowStartPicker(false);
+      setShowEndPicker(false);
+    }
+    if (isStartDate) {
+      setStartDate(currentDate);
+      if (currentDate > endDate) {
+        setEndDate(new Date(currentDate.getTime() + 60 * 60 * 1000));
+      }
+    } else {
+      setEndDate(currentDate);
+    }
+  };
+
+  const showDatepicker = (isStartDate) => {
+    if (isStartDate) {
+      setShowStartPicker(true);
+      setShowEndPicker(false);
+    } else {
+      setShowStartPicker(false);
+      setShowEndPicker(true);
+    }
+  };
+
+  const requestCalendarPermissions = async () => {
+    try {
+      const result = await RNCalendarEvents.requestPermissions(false);
+      if (result === 'authorized') {
+        Alert.alert('Success', 'Calendar permissions granted');
+      } else {
+        Alert.alert('Error', 'Calendar permissions not granted');
+      }
+    } catch (error) {
+      console.error('Error requesting calendar permissions:', error);
+      Alert.alert('Error', 'Failed to request calendar permissions');
+    }
+  };
+
 
   return (
     <>
@@ -224,7 +272,11 @@ const App: () => React$Node = () => {
         <ScrollView
           contentInsetAdjustmentBehavior="automatic"
           style={styles.scrollView}>
-          <Header />
+          <Button
+            title="Request Permissions"
+            onPress={requestCalendarPermissions}
+            color="blue"
+          />
           <View style={styles.body}>
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>Event Form</Text>
@@ -247,6 +299,32 @@ const App: () => React$Node = () => {
                 onChangeText={setNotes}
                 multiline
               />
+              <TouchableOpacity onPress={() => showDatepicker(true)} style={styles.dateButton}>
+                <Text>Start: {moment(startDate).format('MMMM Do YYYY, h:mm a')}</Text>
+              </TouchableOpacity>
+              {showStartPicker && (
+                <DateTimePicker
+                  testID="startDateTimePicker"
+                  value={startDate}
+                  mode="datetime"
+                  // is24Hour={true}
+                  display="default"
+                  onChange={(event, date) => onChangeDate(event, date, true)}
+                />
+              )}
+              <TouchableOpacity onPress={() => showDatepicker(false)} style={styles.dateButton}>
+                <Text>End: {moment(endDate).format('MMMM Do YYYY, h:mm a')}</Text>
+              </TouchableOpacity>
+              {showEndPicker && (
+                <DateTimePicker
+                  testID="endDateTimePicker"
+                  value={endDate}
+                  mode="datetime"
+                  // is24Hour={true}
+                  display="default"
+                  onChange={(event, date) => onChangeDate(event, date, false)}
+                />
+              )}
               <Button
                 title={selectedEvent ? "Update Event" : "Create Event"}
                 onPress={selectedEvent ? handleUpdateEvent : handleCreateEvent}
@@ -302,12 +380,14 @@ const styles = StyleSheet.create({
   },
   eventItem: {
     fontSize: 14,
+    color: 'black',
     marginBottom: 5,
     padding: 10,
     backgroundColor: '#f0f0f0',
   },
   input: {
     height: 40,
+    color: 'bleck',
     borderColor: 'gray',
     borderWidth: 1,
     marginBottom: 10,
