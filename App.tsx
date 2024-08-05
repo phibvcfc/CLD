@@ -17,6 +17,7 @@ import { Header, Colors } from 'react-native/Libraries/NewAppScreen';
 import RNCalendarEvents from 'react-native-calendar-events';
 import moment from 'moment';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { NativeEventEmitter, NativeModules } from 'react-native';
 
 export const addToIosCalendar = async (
   title: string,
@@ -156,7 +157,7 @@ const App: () => React$Node = () => {
 
   const handleFetchEvents = async () => {
     const startDate = moment().add(-1, 'days').endOf('day');
-    const endDate = moment().add(250, 'days').endOf('day');
+    const endDate = moment().add(4, 'days').endOf('day');
     const fetchedEvents = await fetchAllEvents(startDate, endDate);
     setEvents(fetchedEvents);
     Alert.alert('Events Fetched', `Found ${fetchedEvents.length} events`);
@@ -346,7 +347,12 @@ const App: () => React$Node = () => {
               <Text style={styles.sectionTitle}>Event List</Text>
               <Button
                 title="Fetch Events"
-                onPress={handleFetchEvents}
+                onPress={()=>{
+                  // NativeModules.CalendarModule.createCalendarEvent('DUAN', "Pro");
+                  NativeModules.CalendarModule.createCalendarEvent((resg)=>{
+                    Alert.alert(resg)
+                  });
+                }}
               />
               {events.map((event, index) => (
                 <Text key={index} style={styles.eventItem} onPress={() => selectEvent(event)}>
