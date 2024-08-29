@@ -80,6 +80,29 @@ To learn more about React Native, take a look at the following resources:
 
 
 
+* Cơ chế sync data giữa Calendar OS -> App Hansin 
+
+Android
+
++ Đang dùng Calendar Content Provider để lấy events từ Calendar os
++ Cần cấp quyền WRITE_CALENDAR và READ_CALENDAR để lấy events từ Calendar os vào app, thông qua CalendarContract
++ Dùng query CONTENT_URI để lấy events CalendarContract
+
+IOS
++ Sử dụng EKEventStore để yêu cầu quyền truy cập vào các sự kiện trong lịch của người dùng.
++ Sử dụng EKEventStore để truy vấn và lấy danh sách các sự kiện từ lịch.
++ Thêm mới, cập nhật hoặc xóa sự kiện từ lịch thông qua các API của EventKit.
+
+
+* Outlook -> Calendar OS -> Hansin 
+ và Google Calendar -> Calendar OS -> App Hansin 
+
+- Từ Outlook/Google Calendar sync qua Calendar OS thông qua account đã đăng nhập.  Được xử lý bởi hệ điều hành thông qua việc cấu hình tài khoản Outlook/Google calendar trong phần cài đặt của thiết bị.
+- Calendar sẽ tự động đồng bộ thông qua account đã đăng nhập và config.
+
+
+
+
 
  -Các trường hợp đồng bộ:
 + Thêm sự kiện mới
