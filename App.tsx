@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -12,138 +12,21 @@ import {
   Linking,
   TextInput,
   TouchableOpacity,
+  AppState,
+  Modal,
 } from 'react-native';
-import { Header, Colors } from 'react-native/Libraries/NewAppScreen';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
 import RNCalendarEvents from 'react-native-calendar-events';
 import moment from 'moment';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { NativeEventEmitter, NativeModules } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import BackgroundTimer from 'react-native-background-timer';
+import DatePicker from 'react-native-date-picker';
 
-export const addToIosCalendar = async (
-  title: string,
-  startDate: any,
-  endDate: any,
-  location: string,
-  url: string
-) => {
-  // iOS: Requires # of seconds from January 1 2001 of the date you want to open calendar on
-  const referenceDate = moment.utc('2001-01-01');
-  const secondsSinceRefDateiOS = startDate - referenceDate.unix();
-  try {
-    await RNCalendarEvents.requestPermissions(false);
-    await RNCalendarEvents.checkPermissions(true);
-    await RNCalendarEvents.saveEvent(title, {
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      location: location,
-      notes: title,
-      url: url,
-      alarms: [
-        { date: startDate.toISOString() - 6000 },
-      ],
-    });
-    Linking.openURL(`calshow:${secondsSinceRefDateiOS}`);
-  } catch (error) {
-    //  showMessage(calendarIosFail);
-    return null;
-  }
-};
+const SYNC_INTERVAL = 2 * 60 * 1000; // 2 minutes
+const RETRY_INTERVAL = 10 * 1000; // 10 seconds
+const MAX_RETRIES = 3;
 
-const fetchAllEvents = async (startDate, endDate) => {
-  try {
-    const hasPermission = await RNCalendarEvents.checkPermissions();
-    if (hasPermission !== 'authorized') {
-      const requestedPermission = await RNCalendarEvents.requestPermissions();
-      if (requestedPermission !== 'authorized') {
-        throw new Error('Calendar permission not granted');
-      }
-    }
-
-    const calendars = await RNCalendarEvents.findCalendars();
-    const calendarIds = calendars.map(calendar => calendar.id);
-
-    const events = await RNCalendarEvents.fetchAllEvents(
-      startDate.toISOString(),
-      endDate.toISOString(),
-      calendarIds
-    );
-    console.log(JSON.stringify(events));
-
-    return events;
-  } catch (error) {
-    console.error('Error fetching events:', error);
-    return [];
-  }
-};
-
-const createEvent = async (title, startDate, endDate, location, notes) => {
-  try {
-    const hasPermission = await RNCalendarEvents.checkPermissions();
-    if (hasPermission !== 'authorized') {
-      const requestedPermission = await RNCalendarEvents.requestPermissions();
-      if (requestedPermission !== 'authorized') {
-        throw new Error('Calendar permission not granted');
-      }
-    }
-
-    const eventId = await RNCalendarEvents.saveEvent(title, {
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      location: location,
-      notes: notes,
-      alarms: [
-        { date: -30 } // Reminder 30 minutes before the event
-      ]
-    });
-
-    return eventId;
-  } catch (error) {
-    console.error('Error creating event:', error);
-    return null;
-  }
-};
-
-const updateEvent = async (eventId, title, startDate, endDate, location, notes) => {
-  try {
-    const hasPermission = await RNCalendarEvents.checkPermissions();
-    if (hasPermission !== 'authorized') {
-      throw new Error('Calendar permission not granted');
-    }
-
-    await RNCalendarEvents.saveEvent(title, {
-      id: eventId,
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      location: location,
-      notes: notes,
-      alarms: [
-        { date: -30 } // Reminder 30 minutes before the event
-      ]
-    });
-
-    return true;
-  } catch (error) {
-    console.error('Error updating event:', error);
-    return false;
-  }
-};
-
-const deleteEvent = async (eventId) => {
-  try {
-    const hasPermission = await RNCalendarEvents.checkPermissions();
-    if (hasPermission !== 'authorized') {
-      throw new Error('Calendar permission not granted');
-    }
-
-    await RNCalendarEvents.removeEvent(eventId);
-    return true;
-  } catch (error) {
-    console.error('Error deleting event:', error);
-    return false;
-  }
-};
-
-const App: () => React$Node = () => {
+const App = () => {
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [title, setTitle] = useState('');
@@ -153,26 +36,342 @@ const App: () => React$Node = () => {
   const [endDate, setEndDate] = useState(new Date(new Date().getTime() + 60 * 60 * 1000));
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+  const [syncStatus, setSyncStatus] = useState('idle');
+  const [lastSyncTime, setLastSyncTime] = useState(null);
+  const [calendarId, setCalendarId] = useState('');
 
+  useEffect(() => {
+    const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
+    
+    const initializeSync = async () => {
+      await loadLastSyncTime();
+      checkCalendarPermissions();
+    
+      // Initialize lastSyncTime if it's null
+      if (lastSyncTime === null) {
+        const oneWeekAgo = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000);
+        setLastSyncTime(oneWeekAgo);
+        saveLastSyncTime();
+      }
+  
+      // Start periodic sync
+      const syncInterval = BackgroundTimer.setInterval(() => {
+        console.log("Interval called");
+        checkCalendarAppWithSync();
+      }, SYNC_INTERVAL);
+  
+      return () => {
+        BackgroundTimer.clearInterval(syncInterval);
+      };
+    };
+  
+    initializeSync();
+  
+    return () => {
+      appStateSubscription.remove();
+    }
+  }, []);
+  
 
-  const handleFetchEvents = async () => {
-    const startDate = moment().add(-1, 'days').endOf('day');
-    const endDate = moment().add(4, 'days').endOf('day');
-    const fetchedEvents = await fetchAllEvents(startDate, endDate);
-    setEvents(fetchedEvents);
-    Alert.alert('Events Fetched', `Found ${fetchedEvents.length} events`);
+  const handleAppStateChange = (nextAppState) => {
+    if (nextAppState === 'active') {
+      checkCalendarAppWithSync();
+    }
+  };
+
+  const loadLastSyncTime = async () => {
+    try {
+      const storedTime = await AsyncStorage.getItem('lastSyncTime');
+      if (storedTime) {
+        setLastSyncTime(new Date(JSON.parse(storedTime)));
+      } else {
+        // If no stored time, set it to one week ago
+        const oneWeekAgo = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000);
+        setLastSyncTime(oneWeekAgo);
+        await saveLastSyncTime();
+      }
+    } catch (error) {
+      console.error('Error loading last sync time:', error);
+      // Set a default time if there's an error
+      const oneWeekAgo = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000);
+      setLastSyncTime(oneWeekAgo);
+    }
+  };
+
+  const saveLastSyncTime = async () => {
+    try {
+      const currentTime = new Date();
+      await AsyncStorage.setItem('lastSyncTime', JSON.stringify(currentTime));
+      setLastSyncTime(currentTime);
+    } catch (error) {
+      console.error('Error saving last sync time:', error);
+    }
+  };
+
+  const checkCalendarAppWithSync = async (retryCount = 0) => {
+    try {
+      // Request access to calendar and retrieve the list of calendars
+      const calendars = await RNCalendarEvents.findCalendars();
+  
+      setCalendarId('')
+      if (calendars.length === 0) {
+        // If no calendars found, check for popular calendar apps
+        const hasOutlook = await Linking.canOpenURL('ms-outlook://');
+        const hasGoogleCalendar = await Linking.canOpenURL('content://com.android.calendar/');
+  
+        if (hasOutlook || hasGoogleCalendar) {
+          syncCalendar(retryCount)
+        } else {
+          setSyncStatus('Calendar App not available')
+          Alert.alert('No Calendar App', 'No compatible calendar app found on your device.');
+        }
+      } else {
+        // Filter calendars that support modifications (which usually means sync is enabled)
+        const syncedCalendars = calendars.filter(calendar => calendar.allowsModifications);
+  
+        if (syncedCalendars.length > 0) {
+          // Now use the first synced calendar for any further actions
+          const calendarId = syncedCalendars[0].id;
+          console.log('Calendar' + calendarId)
+          setCalendarId(calendarId);
+          // Call a function to sync the calendar (example function)
+          syncCalendar(retryCount);
+        } else {
+          setSyncStatus('Calendar App none of them support sync')
+          Alert.alert('Calendar App', 'Calendars found, but none of them support sync.');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking calendar app:', error);
+      Alert.alert('Error', 'An error occurred while checking the calendar app.');
+    }
+  };
+  
+  const syncCalendar = async (retryCount = 0) => {
+    if (syncStatus === 'syncing') return;
+  
+    setSyncStatus('syncing...');
+    try {
+      const now = new Date();
+      // Function to reset time to the start of the day (00:00:00)
+      const startOfDay = (date) => new Date(date.setHours(0, 0, 0, 0));
+
+      // Calculate the default start and end dates
+      const sevenDaysInMilliseconds = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+
+      const defaultStartDate = startOfDay(new Date(now.getTime() - sevenDaysInMilliseconds));
+      const defaultEndDate = startOfDay(new Date(now.getTime() + sevenDaysInMilliseconds));
+
+      // Use lastSyncTime if it's defined, otherwise use default dates
+      const startDate = lastSyncTime ? startOfDay(new Date(lastSyncTime)) : defaultStartDate;
+      const endDate = defaultEndDate;
+
+      console.log('Default1 start date: ' + defaultStartDate + ' end date: ' + endDate);
+      
+      // Fetch events within the specified date range
+      const events = await fetchAllEvents(defaultStartDate, endDate);
+      await processEvents(events);
+      await saveLastSyncTime();
+      setSyncStatus('idle');
+    } catch (error) {
+      console.error('Sync failed:', error);
+      if (retryCount < MAX_RETRIES) {
+        setTimeout(() => syncCalendar(retryCount + 1), RETRY_INTERVAL * (retryCount + 1));
+      } else {
+        setSyncStatus('error');
+        Alert.alert('Sync Error', 'Failed to sync calendar. Please try again later.');
+      }
+    }
+  };
+
+  const processEvents = async (newEvents) => {
+    try {
+      const storedEvents = await AsyncStorage.getItem('localEvents');
+      const localEvents = storedEvents ? JSON.parse(storedEvents) : [];
+  
+      // Map localEvents by id for quick lookup
+      const localEventsMap = new Map(localEvents.map(e => [e.id, e]));
+  
+      // Determine new and updated events
+      const newEventsList = newEvents.filter(newEvent => {
+        // Check if the event is new or has been updated
+        const localEvent = localEventsMap.get(newEvent.id);
+        if (localEvent) {
+          // Check if the event has been updated by comparing non-JSON fields
+          return JSON.stringify(localEvent) !== JSON.stringify(newEvent);
+        }
+        // Event is new if it does not exist in localEvents
+        return true;
+      });
+  
+      // Determine deleted events
+      const deletedEvents = localEvents.filter(localEvent =>
+        !newEvents.some(newEvent => newEvent.id === localEvent.id)
+      );
+  
+      // Sort events by start date
+      const sortedEvents = [...newEvents].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+  
+      // Update local storage
+      await AsyncStorage.setItem('localEvents', JSON.stringify(sortedEvents));
+  
+      // Update state
+      setEvents(sortedEvents);
+  
+      // Log new events
+      const addedEvents = newEvents.filter(newEvent => !localEventsMap.has(newEvent.id));
+      if (addedEvents.length > 0) {
+        console.log('Added events:');
+        addedEvents.forEach((event : any) => {
+          console.log(`Event ID: ${event.id}`);
+          console.log(`Added Event:`, event);
+        });
+      }
+  
+      // Log specific updated events
+      if (newEventsList.length > 0) {
+        console.log('Updated events:');
+        newEventsList.forEach((event : any) => {
+          if (localEventsMap.has(event.id)) {
+            console.log(`Event ID: ${event.id}`);
+            console.log(`Updated Event:`, event);
+          }
+        });
+      }
+  
+      // Log specific deleted events
+      if (deletedEvents.length > 0) {
+        console.log('Deleted events:');
+        deletedEvents.forEach((event : any) => {
+          console.log(`Event ID: ${event.id}`);
+          console.log(`Deleted Event:`, event);
+        });
+      }
+  
+    } catch (error) {
+      console.error('Error processing events:', error);
+      throw error;
+    }
+  };
+  
+
+  const checkCalendarPermissions = async () => {
+    try {
+      const authStatus = await RNCalendarEvents.checkPermissions();
+      if (authStatus !== 'authorized') {
+        await requestCalendarPermissions();
+      }
+    } catch (error) {
+      console.error('Error checking calendar permissions:', error);
+    }
+  };
+
+  const requestCalendarPermissions = async () => {
+    try {
+      const authStatus = await RNCalendarEvents.requestPermissions(false);
+      if (authStatus !== 'authorized') {
+        Alert.alert('Permission Required', 'This app requires access to your calendar to function properly.');
+      }
+    } catch (error) {
+      console.error('Error requesting calendar permissions:', error);
+    }
+  };
+
+  const checkCalendarApp = async () => {
+    try {
+      const calendars = await RNCalendarEvents.findCalendars();
+      if (calendars.length === 0) {
+        // No default calendar app found, check for alternatives
+        const hasOutlook = await Linking.canOpenURL('ms-outlook://');
+        const hasGoogleCalendar = await Linking.canOpenURL('content://com.android.calendar/');
+        
+        if (hasOutlook || hasGoogleCalendar) {
+          Alert.alert('Calendar App', 'Please enable calendar sync in your Outlook or Google Calendar app settings.');
+        } else {
+          Alert.alert('No Calendar App', 'No compatible calendar app found on your device.');
+        }
+      } else {
+        Alert.alert('Calendar App', 'Calendar app found and ready to use.');
+      }
+    } catch (error) {
+      console.error('Error checking calendar app:', error);
+    }
+  };
+
+  const fetchAllEvents = async (startDate, endDate) => {
+    try {
+      if (!startDate || !endDate) {
+        throw new Error('Invalid date range for fetching events');
+      }
+      const events = await RNCalendarEvents.fetchAllEvents(
+        startDate.toISOString(),
+        endDate.toISOString()
+      );
+      return events;
+    } catch (error) {
+      console.error('Error fetching events:', error);
+      throw error;
+    }
+  };
+
+  const createEvent = async (title, startDate, endDate, location, notes) => {
+    try {
+      const eventId = await RNCalendarEvents.saveEvent(title, {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        location: location,
+        notes: notes,
+        alarms: [
+          { date: -30 } // Reminder 30 minutes before the event
+        ],
+        ...(calendarId ? { calendarId: calendarId } : {})
+      });
+      return eventId;
+    } catch (error) {
+      console.error('Error creating event:', error);
+      throw error;
+    }
+  };
+
+  const updateEvent = async (eventId, title, startDate, endDate, location, notes) => {
+    try {
+      await RNCalendarEvents.saveEvent(title, {
+        id: eventId,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        location: location,
+        notes: notes,
+        alarms: [
+          { date: -30 } // Reminder 30 minutes before the event
+        ],
+        ...(calendarId ? { calendarId: calendarId } : {})
+      });
+      return true;
+    } catch (error) {
+      console.error('Error updating event:', error);
+      throw error;
+    }
+  };
+
+  const deleteEvent = async (eventId) => {
+    try {
+      await RNCalendarEvents.removeEvent(eventId);
+      return true;
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      throw error;
+    }
   };
 
   const handleCreateEvent = async () => {
-    const startDate = moment().add(1, 'hours');
-    const endDate = moment().add(2, 'hours');
-
-    const eventId = await createEvent(title, startDate, endDate, location, notes);
-    if (eventId) {
-      Alert.alert('Event Created', `Event created with ID: ${eventId}`);
-      handleFetchEvents(); // Refresh the event list
-      clearForm();
-    } else {
+    try {
+      const eventId = await createEvent(title, startDate, endDate, location, notes);
+      if (eventId) {
+        Alert.alert('Event Created', `Event created with ID: ${eventId}`);
+        await syncCalendar();
+        clearForm();
+      }
+    } catch (error) {
       Alert.alert('Error', 'Failed to create event');
     }
   };
@@ -183,15 +382,14 @@ const App: () => React$Node = () => {
       return;
     }
 
-    const startDate = moment(selectedEvent.startDate);
-    const endDate = moment(selectedEvent.endDate);
-
-    const success = await updateEvent(selectedEvent.id, title, startDate, endDate, location, notes);
-    if (success) {
-      Alert.alert('Event Updated', 'Event updated successfully');
-      handleFetchEvents(); // Refresh the event list
-      clearForm();
-    } else {
+    try {
+      const success = await updateEvent(selectedEvent.id, title, startDate, endDate, location, notes);
+      if (success) {
+        Alert.alert('Event Updated', 'Event updated successfully');
+        await syncCalendar();
+        clearForm();
+      }
+    } catch (error) {
       Alert.alert('Error', 'Failed to update event');
     }
   };
@@ -202,12 +400,14 @@ const App: () => React$Node = () => {
       return;
     }
 
-    const success = await deleteEvent(selectedEvent.id);
-    if (success) {
-      Alert.alert('Event Deleted', 'Event deleted successfully');
-      handleFetchEvents(); // Refresh the event list
-      clearForm();
-    } else {
+    try {
+      const success = await deleteEvent(selectedEvent.id);
+      if (success) {
+        Alert.alert('Event Deleted', 'Event deleted successfully');
+        await syncCalendar();
+        clearForm();
+      }
+    } catch (error) {
       Alert.alert('Error', 'Failed to delete event');
     }
   };
@@ -217,6 +417,8 @@ const App: () => React$Node = () => {
     setTitle(event.title);
     setLocation(event.location || '');
     setNotes(event.notes || '');
+    setStartDate(new Date(event.startDate));
+    setEndDate(new Date(event.endDate));
   };
 
   const clearForm = () => {
@@ -224,48 +426,10 @@ const App: () => React$Node = () => {
     setTitle('');
     setLocation('');
     setNotes('');
+    setStartDate(new Date());
+    setEndDate(new Date(new Date().getTime() + 60 * 60 * 1000));
   };
-  const onChangeDate = (event, selectedDate, isStartDate) => {
-    const currentDate = selectedDate || (isStartDate ? startDate : endDate);
-    if (Platform.OS === 'android') {
-      setShowStartPicker(false);
-      setShowEndPicker(false);
-    }
-    if (isStartDate) {
-      setStartDate(currentDate);
-      if (currentDate > endDate) {
-        setEndDate(new Date(currentDate.getTime() + 60 * 60 * 1000));
-      }
-    } else {
-      setEndDate(currentDate);
-    }
-  };
-
-  const showDatepicker = (isStartDate) => {
-    if (isStartDate) {
-      setShowStartPicker(true);
-      setShowEndPicker(false);
-    } else {
-      setShowStartPicker(false);
-      setShowEndPicker(true);
-    }
-  };
-
-  const requestCalendarPermissions = async () => {
-    try {
-      const result = await RNCalendarEvents.requestPermissions(false);
-      if (result === 'authorized') {
-        Alert.alert('Success', 'Calendar permissions granted');
-      } else {
-        Alert.alert('Error', 'Calendar permissions not granted');
-      }
-    } catch (error) {
-      console.error('Error requesting calendar permissions:', error);
-      Alert.alert('Error', 'Failed to request calendar permissions');
-    }
-  };
-
-
+  
   return (
     <>
       <StatusBar barStyle="dark-content" />
@@ -273,12 +437,28 @@ const App: () => React$Node = () => {
         <ScrollView
           contentInsetAdjustmentBehavior="automatic"
           style={styles.scrollView}>
-          <Button
-            title="Request Permissions"
-            onPress={requestCalendarPermissions}
-            color="blue"
-          />
           <View style={styles.body}>
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Calendar Sync</Text>
+              <Button
+                title="Check Calendar Permissions"
+                onPress={checkCalendarPermissions}
+                color="blue"
+              />
+              <Button
+                title="Check Calendar App"
+                onPress={checkCalendarApp}
+                color="green"
+              />
+              <Button
+                title="Sync Calendar"
+                onPress={() => checkCalendarAppWithSync()}
+                color="purple"
+              />
+              <Text>Last Sync: {lastSyncTime ? lastSyncTime.toLocaleString() : 'Never'}</Text>
+              <Text>Sync Status: {syncStatus}</Text>
+            </View>
+
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>Event Form</Text>
               <TextInput
@@ -300,32 +480,36 @@ const App: () => React$Node = () => {
                 onChangeText={setNotes}
                 multiline
               />
-              <TouchableOpacity onPress={() => showDatepicker(true)} style={styles.dateButton}>
+              <TouchableOpacity onPress={() => setShowStartPicker(true)} style={styles.dateButton}>
                 <Text>Start: {moment(startDate).format('MMMM Do YYYY, h:mm a')}</Text>
               </TouchableOpacity>
-              {showStartPicker && (
-                <DateTimePicker
-                  testID="startDateTimePicker"
-                  value={startDate}
-                  mode="datetime"
-                  // is24Hour={true}
-                  display="default"
-                  onChange={(event, date) => onChangeDate(event, date, true)}
-                />
-              )}
-              <TouchableOpacity onPress={() => showDatepicker(false)} style={styles.dateButton}>
+              <DatePicker
+                modal
+                open={showStartPicker}
+                date={startDate}
+                onConfirm={(date) => {
+                  setShowStartPicker(false)
+                  setStartDate(date)
+                }}
+                onCancel={() => {
+                  setShowStartPicker(false)
+                }}
+              />
+              <TouchableOpacity onPress={() => setShowEndPicker(true)} style={styles.dateButton}>
                 <Text>End: {moment(endDate).format('MMMM Do YYYY, h:mm a')}</Text>
               </TouchableOpacity>
-              {showEndPicker && (
-                <DateTimePicker
-                  testID="endDateTimePicker"
-                  value={endDate}
-                  mode="datetime"
-                  // is24Hour={true}
-                  display="default"
-                  onChange={(event, date) => onChangeDate(event, date, false)}
-                />
-              )}
+              <DatePicker
+                modal
+                open={showEndPicker}
+                date={endDate}
+                onConfirm={(date) => {
+                  setShowEndPicker(false)
+                  setEndDate(date)
+                }}
+                onCancel={() => {
+                  setShowEndPicker(false)
+                }}
+              />
               <Button
                 title={selectedEvent ? "Update Event" : "Create Event"}
                 onPress={selectedEvent ? handleUpdateEvent : handleCreateEvent}
@@ -338,67 +522,93 @@ const App: () => React$Node = () => {
                 />
               )}
               <Button
-                title="Clear Form"
-                onPress={clearForm}
-              />
-            </View>
-
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Event List</Text>
-              <Button
-                title="Fetch Events"
-                onPress={()=>{
-                  // NativeModules.CalendarModule.createCalendarEvent('DUAN', "Pro");
-                  NativeModules.CalendarModule.createCalendarEvent((resg)=>{
-                    Alert.alert(resg)
-                  });
-                }}
-              />
-              {events.map((event, index) => (
-                <Text key={index} style={styles.eventItem} onPress={() => selectEvent(event)}>
-                  {event.title} - {moment(event.startDate).format('MMMM Do YYYY, h:mm a')}
-                </Text>
-              ))}
-            </View>
+              title="Clear Form"
+              onPress={clearForm}
+            />
           </View>
-        </ScrollView>
-      </SafeAreaView>
-    </>
-  );
+
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Event List</Text>
+            <Button
+              title="Fetch Events"
+              onPress={() => {
+                fetchAllEvents(new Date(), new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000))
+                  .then(fetchedEvents => {
+                    setEvents(fetchedEvents);
+                    Alert.alert('Events Fetched', `Found ${fetchedEvents.length} events`);
+                  })
+                  .catch(error => {
+                    console.error('Error fetching events:', error);
+                    Alert.alert('Error', 'Failed to fetch events');
+                  });
+              }}
+            />
+            {events.map((event, index) => (
+              <TouchableOpacity 
+                key={index} 
+                style={styles.eventItem} 
+                onPress={() => selectEvent(event)}
+              >
+                <Text style={styles.eventTitle}>{event.title}</Text>
+                <Text style={styles.eventTime}>
+                  {moment(event.startDate).format('MMMM Do YYYY, h:mm a')}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  </>
+);
 };
 
 const styles = StyleSheet.create({
-  scrollView: {
-    backgroundColor: Colors.lighter,
-  },
-  body: {
-    backgroundColor: Colors.white,
-  },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
-    marginBottom: 16,
-  },
-  eventItem: {
-    fontSize: 14,
-    color: 'black',
-    marginBottom: 5,
-    padding: 10,
-    backgroundColor: '#f0f0f0',
-  },
-  input: {
-    height: 40,
-    color: 'bleck',
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
-  },
+scrollView: {
+  backgroundColor: Colors.lighter,
+},
+body: {
+  backgroundColor: Colors.white,
+},
+sectionContainer: {
+  marginTop: 32,
+  paddingHorizontal: 24,
+},
+sectionTitle: {
+  fontSize: 24,
+  fontWeight: '600',
+  color: Colors.black,
+  marginBottom: 16,
+},
+eventItem: {
+  backgroundColor: '#f0f0f0',
+  padding: 10,
+  marginBottom: 10,
+  borderRadius: 5,
+},
+eventTitle: {
+  fontSize: 16,
+  fontWeight: 'bold',
+  color: Colors.black,
+},
+eventTime: {
+  fontSize: 14,
+  color: Colors.dark,
+},
+input: {
+  height: 40,
+  borderColor: 'gray',
+  borderWidth: 1,
+  marginBottom: 10,
+  paddingHorizontal: 10,
+  color: Colors.black,
+},
+dateButton: {
+  backgroundColor: '#e0e0e0',
+  padding: 10,
+  marginBottom: 10,
+  borderRadius: 5,
+},
 });
 
 export default App;

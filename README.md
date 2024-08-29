@@ -77,3 +77,36 @@ To learn more about React Native, take a look at the following resources:
 - [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
 - [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
 - [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+
+
+
+
+ -Các trường hợp đồng bộ:
++ Thêm sự kiện mới
++ Cập nhật sự kiện hiện có
++ Xóa sự kiện
+
+- Timing đồng bộ:
++ Đồng bộ định kỳ (ví dụ: mỗi 5/10 or 15 phút/lần) khii ở forceground
++ Đồng bộ khii người dùng mở/hoặc resume lại ứng dụng
++ Đồng Bộ Thủ Công (tạo Button đồng bộ thủ công)
+
+- Handle khii đồng bộ gặp sự cố.
++ Xử lý check app calendar os (ví dụ như samsung thì có Samsung calendar, google pixel thì có google calendar) có tồn tại trên device chưa, nếu chưa thì check các app như outlook, google calendar để tránh lỗi không có data.
++ Các ngoại lệ khii thực hiện các thao tác trên Calendar OS
++ Thông báo cho người dùng về lỗi xảy ra và yêu cầu họ thử lại sau.
+
+- Đối với ios trên tài liệu có ghii: iOS settings in Settings > Calendar > Sync > All Events
+- Đối với app outlook cần vào setting enable Sync Calendars.
+
+=> Cách làm
+- Sử dụng AsyncStorage để lưu trữ thông tin lasttime đồng bộ cuối cùng và trạng thái đồng bộ (khii đã mở app)
+- Xử lý lỗi: Triển khai cơ chế retry với thời gian chờ tăng dần. (ví dụ như lần retry đầu tiên thì chờ 10s các lần tiếp theo thì + thêm 10s)
+- Chỉ đồng bộ những thay đổi mới thay vì toàn bộ dữ liệu mỗi lần.
+-Sử dụng AsyncStorage hoặc sử dụng  Local Database  để lưu các thông tin như 
+    id
+    title
+    startDate
+    endDate
+    description
+ để check các event được delete or update từ calendar os

@@ -1,0 +1,367 @@
+diff --git a/node_modules/react-native-background-timer/android/.classpath b/node_modules/react-native-background-timer/android/.classpath
+new file mode 100644
+index 0000000..bbe97e5
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/.classpath
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<classpath>
++	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17/"/>
++	<classpathentry kind="con" path="org.eclipse.buildship.core.gradleclasspathcontainer"/>
++	<classpathentry kind="output" path="bin/default"/>
++</classpath>
+diff --git a/node_modules/react-native-background-timer/android/.project b/node_modules/react-native-background-timer/android/.project
+new file mode 100644
+index 0000000..1f5a915
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/.project
+@@ -0,0 +1,34 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<projectDescription>
++	<name>react-native-background-timer</name>
++	<comment>Project react-native-background-timer created by Buildship.</comment>
++	<projects>
++	</projects>
++	<buildSpec>
++		<buildCommand>
++			<name>org.eclipse.jdt.core.javabuilder</name>
++			<arguments>
++			</arguments>
++		</buildCommand>
++		<buildCommand>
++			<name>org.eclipse.buildship.core.gradleprojectbuilder</name>
++			<arguments>
++			</arguments>
++		</buildCommand>
++	</buildSpec>
++	<natures>
++		<nature>org.eclipse.jdt.core.javanature</nature>
++		<nature>org.eclipse.buildship.core.gradleprojectnature</nature>
++	</natures>
++	<filteredResources>
++		<filter>
++			<id>1724898165241</id>
++			<name></name>
++			<type>30</type>
++			<matcher>
++				<id>org.eclipse.core.resources.regexFilterMatcher</id>
++				<arguments>node_modules|\.git|__CREATED_BY_JAVA_LANGUAGE_SERVER__</arguments>
++			</matcher>
++		</filter>
++	</filteredResources>
++</projectDescription>
+diff --git a/node_modules/react-native-background-timer/android/.settings/org.eclipse.buildship.core.prefs b/node_modules/react-native-background-timer/android/.settings/org.eclipse.buildship.core.prefs
+new file mode 100644
+index 0000000..1675490
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/.settings/org.eclipse.buildship.core.prefs
+@@ -0,0 +1,2 @@
++connection.project.dir=../../../android
++eclipse.preferences.version=1
+diff --git a/node_modules/react-native-background-timer/android/build/.transforms/9384fb71191bb8147931b372853e97f0/results.bin b/node_modules/react-native-background-timer/android/build/.transforms/9384fb71191bb8147931b372853e97f0/results.bin
+new file mode 100644
+index 0000000..0d259dd
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/build/.transforms/9384fb71191bb8147931b372853e97f0/results.bin
+@@ -0,0 +1 @@
++o/classes
+diff --git a/node_modules/react-native-background-timer/android/build/.transforms/9384fb71191bb8147931b372853e97f0/transformed/classes/classes_dex/classes.dex b/node_modules/react-native-background-timer/android/build/.transforms/9384fb71191bb8147931b372853e97f0/transformed/classes/classes_dex/classes.dex
+new file mode 100644
+index 0000000..6c90c24
+Binary files /dev/null and b/node_modules/react-native-background-timer/android/build/.transforms/9384fb71191bb8147931b372853e97f0/transformed/classes/classes_dex/classes.dex differ
+diff --git a/node_modules/react-native-background-timer/android/build/generated/source/buildConfig/debug/com/ocetnik/timer/BuildConfig.java b/node_modules/react-native-background-timer/android/build/generated/source/buildConfig/debug/com/ocetnik/timer/BuildConfig.java
+new file mode 100644
+index 0000000..88d0ce1
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/build/generated/source/buildConfig/debug/com/ocetnik/timer/BuildConfig.java
+@@ -0,0 +1,10 @@
++/**
++ * Automatically generated file. DO NOT MODIFY
++ */
++package com.ocetnik.timer;
++
++public final class BuildConfig {
++  public static final boolean DEBUG = Boolean.parseBoolean("true");
++  public static final String LIBRARY_PACKAGE_NAME = "com.ocetnik.timer";
++  public static final String BUILD_TYPE = "debug";
++}
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/AndroidManifest.xml b/node_modules/react-native-background-timer/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/AndroidManifest.xml
+new file mode 100644
+index 0000000..85218d3
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/AndroidManifest.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.ocetnik.timer" >
++
++    <uses-sdk android:minSdkVersion="23" />
++
++    <uses-permission android:name="android.permission.WAKE_LOCK" />
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/output-metadata.json b/node_modules/react-native-background-timer/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/output-metadata.json
+new file mode 100644
+index 0000000..6ce63bf
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/output-metadata.json
+@@ -0,0 +1,18 @@
++{
++  "version": 3,
++  "artifactType": {
++    "type": "AAPT_FRIENDLY_MERGED_MANIFESTS",
++    "kind": "Directory"
++  },
++  "applicationId": "com.ocetnik.timer",
++  "variantName": "debug",
++  "elements": [
++    {
++      "type": "SINGLE",
++      "filters": [],
++      "attributes": [],
++      "outputFile": "AndroidManifest.xml"
++    }
++  ],
++  "elementType": "File"
++}
+\ No newline at end of file
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/aar_metadata/debug/aar-metadata.properties b/node_modules/react-native-background-timer/android/build/intermediates/aar_metadata/debug/aar-metadata.properties
+new file mode 100644
+index 0000000..1211b1e
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/build/intermediates/aar_metadata/debug/aar-metadata.properties
+@@ -0,0 +1,6 @@
++aarFormatVersion=1.0
++aarMetadataVersion=1.0
++minCompileSdk=1
++minCompileSdkExtension=0
++minAndroidGradlePluginVersion=1.0.0
++coreLibraryDesugaringEnabled=false
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/annotation_processor_list/debug/annotationProcessors.json b/node_modules/react-native-background-timer/android/build/intermediates/annotation_processor_list/debug/annotationProcessors.json
+new file mode 100644
+index 0000000..9e26dfe
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/build/intermediates/annotation_processor_list/debug/annotationProcessors.json
+@@ -0,0 +1 @@
++{}
+\ No newline at end of file
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/compile_library_classes_jar/debug/classes.jar b/node_modules/react-native-background-timer/android/build/intermediates/compile_library_classes_jar/debug/classes.jar
+new file mode 100644
+index 0000000..ec6d7bd
+Binary files /dev/null and b/node_modules/react-native-background-timer/android/build/intermediates/compile_library_classes_jar/debug/classes.jar differ
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/compile_r_class_jar/debug/R.jar b/node_modules/react-native-background-timer/android/build/intermediates/compile_r_class_jar/debug/R.jar
+new file mode 100644
+index 0000000..47209ee
+Binary files /dev/null and b/node_modules/react-native-background-timer/android/build/intermediates/compile_r_class_jar/debug/R.jar differ
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/compile_symbol_list/debug/R.txt b/node_modules/react-native-background-timer/android/build/intermediates/compile_symbol_list/debug/R.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties b/node_modules/react-native-background-timer/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+new file mode 100644
+index 0000000..2af4418
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+@@ -0,0 +1 @@
++#Wed Aug 28 14:37:52 ICT 2024
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml b/node_modules/react-native-background-timer/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+new file mode 100644
+index 0000000..9556122
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main" generated-set="main$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug" generated-set="debug$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/build/generated/res/resValues/debug"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated" generated-set="generated$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/build/generated/res/resValues/debug"/></dataSet><mergedItems/></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml b/node_modules/react-native-background-timer/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+new file mode 100644
+index 0000000..61d74ef
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/build/intermediates/incremental/mergeDebugJniLibFolders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/jniLibs"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/debug/jniLibs"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/incremental/mergeDebugShaders/merger.xml b/node_modules/react-native-background-timer/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+new file mode 100644
+index 0000000..4f21350
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/build/intermediates/incremental/mergeDebugShaders/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/shaders"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/debug/shaders"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/incremental/packageDebugAssets/merger.xml b/node_modules/react-native-background-timer/android/build/intermediates/incremental/packageDebugAssets/merger.xml
+new file mode 100644
+index 0000000..66a0485
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/build/intermediates/incremental/packageDebugAssets/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet config="main" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/assets"/></dataSet><dataSet config="debug" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/debug/assets"/></dataSet><dataSet config="generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/build/intermediates/shader_assets/debug/out"/></dataSet></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BackgroundTimerModule$1.class b/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BackgroundTimerModule$1.class
+new file mode 100644
+index 0000000..588d2b7
+Binary files /dev/null and b/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BackgroundTimerModule$1.class differ
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BackgroundTimerModule$2.class b/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BackgroundTimerModule$2.class
+new file mode 100644
+index 0000000..20c1389
+Binary files /dev/null and b/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BackgroundTimerModule$2.class differ
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BackgroundTimerModule$3.class b/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BackgroundTimerModule$3.class
+new file mode 100644
+index 0000000..5786c18
+Binary files /dev/null and b/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BackgroundTimerModule$3.class differ
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BackgroundTimerModule.class b/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BackgroundTimerModule.class
+new file mode 100644
+index 0000000..743cb41
+Binary files /dev/null and b/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BackgroundTimerModule.class differ
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BackgroundTimerPackage.class b/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BackgroundTimerPackage.class
+new file mode 100644
+index 0000000..7b72690
+Binary files /dev/null and b/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BackgroundTimerPackage.class differ
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BuildConfig.class b/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BuildConfig.class
+new file mode 100644
+index 0000000..9caa121
+Binary files /dev/null and b/node_modules/react-native-background-timer/android/build/intermediates/javac/debug/classes/com/ocetnik/timer/BuildConfig.class differ
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/local_only_symbol_list/debug/R-def.txt b/node_modules/react-native-background-timer/android/build/intermediates/local_only_symbol_list/debug/R-def.txt
+new file mode 100644
+index 0000000..78ac5b8
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/build/intermediates/local_only_symbol_list/debug/R-def.txt
+@@ -0,0 +1,2 @@
++R_DEF: Internal format may change without notice
++local
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/manifest_merge_blame_file/debug/manifest-merger-blame-debug-report.txt b/node_modules/react-native-background-timer/android/build/intermediates/manifest_merge_blame_file/debug/manifest-merger-blame-debug-report.txt
+new file mode 100644
+index 0000000..510d075
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/build/intermediates/manifest_merge_blame_file/debug/manifest-merger-blame-debug-report.txt
+@@ -0,0 +1,11 @@
++1<?xml version="1.0" encoding="utf-8"?>
++2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++3    package="com.ocetnik.timer" >
++4
++5    <uses-sdk android:minSdkVersion="23" />
++6
++7    <uses-permission android:name="android.permission.WAKE_LOCK" />
++7-->/Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/AndroidManifest.xml:2:5-68
++7-->/Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/AndroidManifest.xml:2:22-65
++8
++9</manifest>
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/merged_manifest/debug/AndroidManifest.xml b/node_modules/react-native-background-timer/android/build/intermediates/merged_manifest/debug/AndroidManifest.xml
+new file mode 100644
+index 0000000..85218d3
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/build/intermediates/merged_manifest/debug/AndroidManifest.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.ocetnik.timer" >
++
++    <uses-sdk android:minSdkVersion="23" />
++
++    <uses-permission android:name="android.permission.WAKE_LOCK" />
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/navigation_json/debug/navigation.json b/node_modules/react-native-background-timer/android/build/intermediates/navigation_json/debug/navigation.json
+new file mode 100644
+index 0000000..0637a08
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/build/intermediates/navigation_json/debug/navigation.json
+@@ -0,0 +1 @@
++[]
+\ No newline at end of file
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/runtime_library_classes_jar/debug/classes.jar b/node_modules/react-native-background-timer/android/build/intermediates/runtime_library_classes_jar/debug/classes.jar
+new file mode 100644
+index 0000000..de1be1a
+Binary files /dev/null and b/node_modules/react-native-background-timer/android/build/intermediates/runtime_library_classes_jar/debug/classes.jar differ
+diff --git a/node_modules/react-native-background-timer/android/build/intermediates/symbol_list_with_package_name/debug/package-aware-r.txt b/node_modules/react-native-background-timer/android/build/intermediates/symbol_list_with_package_name/debug/package-aware-r.txt
+new file mode 100644
+index 0000000..2d74093
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/build/intermediates/symbol_list_with_package_name/debug/package-aware-r.txt
+@@ -0,0 +1 @@
++com.ocetnik.timer
+diff --git a/node_modules/react-native-background-timer/android/build/outputs/logs/manifest-merger-debug-report.txt b/node_modules/react-native-background-timer/android/build/outputs/logs/manifest-merger-debug-report.txt
+new file mode 100644
+index 0000000..6aca572
+--- /dev/null
++++ b/node_modules/react-native-background-timer/android/build/outputs/logs/manifest-merger-debug-report.txt
+@@ -0,0 +1,21 @@
++-- Merging decision tree log ---
++manifest
++ADDED from /Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/AndroidManifest.xml:1:1-3:12
++INJECTED from /Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/AndroidManifest.xml:1:1-3:12
++	package
++		ADDED from /Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/AndroidManifest.xml:1:70-97
++		INJECTED from /Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/AndroidManifest.xml
++	xmlns:android
++		ADDED from /Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/AndroidManifest.xml:1:11-69
++uses-permission#android.permission.WAKE_LOCK
++ADDED from /Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/AndroidManifest.xml:2:5-68
++	android:name
++		ADDED from /Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/AndroidManifest.xml:2:22-65
++uses-sdk
++INJECTED from /Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/AndroidManifest.xml reason: use-sdk injection requested
++INJECTED from /Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/AndroidManifest.xml
++INJECTED from /Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/AndroidManifest.xml
++	android:targetSdkVersion
++		INJECTED from /Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/AndroidManifest.xml
++	android:minSdkVersion
++		INJECTED from /Users/phibui/Documents/cfctechs/CLD/node_modules/react-native-background-timer/android/src/main/AndroidManifest.xml
+diff --git a/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/BackgroundTimerModule$1.class.uniqueId3 b/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/BackgroundTimerModule$1.class.uniqueId3
+new file mode 100644
+index 0000000..588d2b7
+Binary files /dev/null and b/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/BackgroundTimerModule$1.class.uniqueId3 differ
+diff --git a/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/BackgroundTimerModule$2.class.uniqueId1 b/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/BackgroundTimerModule$2.class.uniqueId1
+new file mode 100644
+index 0000000..20c1389
+Binary files /dev/null and b/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/BackgroundTimerModule$2.class.uniqueId1 differ
+diff --git a/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/BackgroundTimerModule$3.class.uniqueId4 b/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/BackgroundTimerModule$3.class.uniqueId4
+new file mode 100644
+index 0000000..5786c18
+Binary files /dev/null and b/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/BackgroundTimerModule$3.class.uniqueId4 differ
+diff --git a/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/BackgroundTimerModule.class.uniqueId0 b/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/BackgroundTimerModule.class.uniqueId0
+new file mode 100644
+index 0000000..a25cf3e
+Binary files /dev/null and b/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/BackgroundTimerModule.class.uniqueId0 differ
+diff --git a/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/BackgroundTimerPackage.class.uniqueId2 b/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/BackgroundTimerPackage.class.uniqueId2
+new file mode 100644
+index 0000000..7b72690
+Binary files /dev/null and b/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/compileTransaction/stash-dir/BackgroundTimerPackage.class.uniqueId2 differ
+diff --git a/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin b/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin
+new file mode 100644
+index 0000000..24e5a65
+Binary files /dev/null and b/node_modules/react-native-background-timer/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin differ
+diff --git a/node_modules/react-native-background-timer/android/src/main/java/com/ocetnik/timer/BackgroundTimerModule.java b/node_modules/react-native-background-timer/android/src/main/java/com/ocetnik/timer/BackgroundTimerModule.java
+index 1f87803..066605c 100644
+--- a/node_modules/react-native-background-timer/android/src/main/java/com/ocetnik/timer/BackgroundTimerModule.java
++++ b/node_modules/react-native-background-timer/android/src/main/java/com/ocetnik/timer/BackgroundTimerModule.java
+@@ -36,7 +36,7 @@ public class BackgroundTimerModule extends ReactContextBaseJavaModule {
+         super(reactContext);
+         this.reactContext = reactContext;
+         this.powerManager = (PowerManager) getReactApplicationContext().getSystemService(reactContext.POWER_SERVICE);
+-        this.wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "rohit_bg_wakelock");
++        this.wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "react-native-background-timer:wakelock");
+         reactContext.addLifecycleEventListener(listener);
+     }
+ 
+@@ -89,6 +89,16 @@ public class BackgroundTimerModule extends ReactContextBaseJavaModule {
+         }, (long) timeout);
+     }
+ 
++    @ReactMethod
++    public void addListener(String eventName) {
++        // Keep: Required for RN built in Event Emitter Calls.
++    }
++
++    @ReactMethod
++    public void removeListeners(Integer count) {
++        // Keep: Required for RN built in Event Emitter Calls.
++    }
++
+     /*@ReactMethod
+     public void clearTimeout(final int id) {
+         // todo one day..
