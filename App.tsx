@@ -8,23 +8,31 @@ import {
   StatusBar,
   Button,
   Alert,
-  Platform,
   Linking,
   TextInput,
   TouchableOpacity,
   AppState,
-  Modal,
 } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import RNCalendarEvents from 'react-native-calendar-events';
 import moment from 'moment';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import BackgroundTimer from 'react-native-background-timer';
 import DatePicker from 'react-native-date-picker';
+import {
+  checkCalendarPermissions,
+  fetchAllEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+  saveLastSyncTime,
+  loadLastSyncTime,
+  processEvents,
+  isCalendarPermissions
+} from './calendar';
 
 const SYNC_INTERVAL = 2 * 60 * 1000; // 2 minutes
 const RETRY_INTERVAL = 10 * 1000; // 10 seconds
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 2;
 
 const App = () => {
   const [events, setEvents] = useState([]);
@@ -39,25 +47,22 @@ const App = () => {
   const [syncStatus, setSyncStatus] = useState('idle');
   const [lastSyncTime, setLastSyncTime] = useState(null);
   const [calendarId, setCalendarId] = useState('');
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
     
     const initializeSync = async () => {
-      await loadLastSyncTime();
+      const lastSync = await loadLastSyncTime();
+      setLastSyncTime(lastSync);
       checkCalendarPermissions();
-    
-      // Initialize lastSyncTime if it's null
-      if (lastSyncTime === null) {
-        const oneWeekAgo = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000);
-        setLastSyncTime(oneWeekAgo);
-        saveLastSyncTime();
-      }
   
       // Start periodic sync
       const syncInterval = BackgroundTimer.setInterval(() => {
-        console.log("Interval called");
-        checkCalendarAppWithSync();
+        if (!hasError) {
+          console.log("Interval called");
+          checkCalendarAppWithSync();
+        }
       }, SYNC_INTERVAL);
   
       return () => {
@@ -70,47 +75,27 @@ const App = () => {
     return () => {
       appStateSubscription.remove();
     }
-  }, []);
-  
+  }, [hasError]);
 
   const handleAppStateChange = (nextAppState) => {
     if (nextAppState === 'active') {
-      checkCalendarAppWithSync();
-    }
-  };
-
-  const loadLastSyncTime = async () => {
-    try {
-      const storedTime = await AsyncStorage.getItem('lastSyncTime');
-      if (storedTime) {
-        setLastSyncTime(new Date(JSON.parse(storedTime)));
+      if (!hasError) {
+        checkCalendarAppWithSync();
       } else {
-        // If no stored time, set it to one week ago
-        const oneWeekAgo = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000);
-        setLastSyncTime(oneWeekAgo);
-        await saveLastSyncTime();
+        setHasError(false);
       }
-    } catch (error) {
-      console.error('Error loading last sync time:', error);
-      // Set a default time if there's an error
-      const oneWeekAgo = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000);
-      setLastSyncTime(oneWeekAgo);
-    }
-  };
-
-  const saveLastSyncTime = async () => {
-    try {
-      const currentTime = new Date();
-      await AsyncStorage.setItem('lastSyncTime', JSON.stringify(currentTime));
-      setLastSyncTime(currentTime);
-    } catch (error) {
-      console.error('Error saving last sync time:', error);
     }
   };
 
   const checkCalendarAppWithSync = async (retryCount = 0) => {
     try {
       // Request access to calendar and retrieve the list of calendars
+      const hasPermission = await isCalendarPermissions();
+      if (!hasPermission) {
+        setSyncStatus('Permission denied');
+        return;
+      }
+
       const calendars = await RNCalendarEvents.findCalendars();
   
       setCalendarId('')
@@ -144,6 +129,7 @@ const App = () => {
     } catch (error) {
       console.error('Error checking calendar app:', error);
       Alert.alert('Error', 'An error occurred while checking the calendar app.');
+      setHasError(true);
     }
   };
   
@@ -170,8 +156,10 @@ const App = () => {
       
       // Fetch events within the specified date range
       const events = await fetchAllEvents(defaultStartDate, endDate);
-      await processEvents(events);
-      await saveLastSyncTime();
+      const processedEvents = await processEvents(events);
+      setEvents(processedEvents);
+      const newLastSyncTime = await saveLastSyncTime();
+      setLastSyncTime(newLastSyncTime);
       setSyncStatus('idle');
     } catch (error) {
       console.error('Sync failed:', error);
@@ -180,100 +168,8 @@ const App = () => {
       } else {
         setSyncStatus('error');
         Alert.alert('Sync Error', 'Failed to sync calendar. Please try again later.');
+        setHasError(true);
       }
-    }
-  };
-
-  const processEvents = async (newEvents) => {
-    try {
-      const storedEvents = await AsyncStorage.getItem('localEvents');
-      const localEvents = storedEvents ? JSON.parse(storedEvents) : [];
-  
-      // Map localEvents by id for quick lookup
-      const localEventsMap = new Map(localEvents.map(e => [e.id, e]));
-  
-      // Determine new and updated events
-      const newEventsList = newEvents.filter(newEvent => {
-        // Check if the event is new or has been updated
-        const localEvent = localEventsMap.get(newEvent.id);
-        if (localEvent) {
-          // Check if the event has been updated by comparing non-JSON fields
-          return JSON.stringify(localEvent) !== JSON.stringify(newEvent);
-        }
-        // Event is new if it does not exist in localEvents
-        return true;
-      });
-  
-      // Determine deleted events
-      const deletedEvents = localEvents.filter(localEvent =>
-        !newEvents.some(newEvent => newEvent.id === localEvent.id)
-      );
-  
-      // Sort events by start date
-      const sortedEvents = [...newEvents].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-  
-      // Update local storage
-      await AsyncStorage.setItem('localEvents', JSON.stringify(sortedEvents));
-  
-      // Update state
-      setEvents(sortedEvents);
-  
-      // Log new events
-      const addedEvents = newEvents.filter(newEvent => !localEventsMap.has(newEvent.id));
-      if (addedEvents.length > 0) {
-        console.log('Added events:');
-        addedEvents.forEach((event : any) => {
-          console.log(`Event ID: ${event.id}`);
-          console.log(`Added Event:`, event);
-        });
-      }
-  
-      // Log specific updated events
-      if (newEventsList.length > 0) {
-        console.log('Updated events:');
-        newEventsList.forEach((event : any) => {
-          if (localEventsMap.has(event.id)) {
-            console.log(`Event ID: ${event.id}`);
-            console.log(`Updated Event:`, event);
-          }
-        });
-      }
-  
-      // Log specific deleted events
-      if (deletedEvents.length > 0) {
-        console.log('Deleted events:');
-        deletedEvents.forEach((event : any) => {
-          console.log(`Event ID: ${event.id}`);
-          console.log(`Deleted Event:`, event);
-        });
-      }
-  
-    } catch (error) {
-      console.error('Error processing events:', error);
-      throw error;
-    }
-  };
-  
-
-  const checkCalendarPermissions = async () => {
-    try {
-      const authStatus = await RNCalendarEvents.checkPermissions();
-      if (authStatus !== 'authorized') {
-        await requestCalendarPermissions();
-      }
-    } catch (error) {
-      console.error('Error checking calendar permissions:', error);
-    }
-  };
-
-  const requestCalendarPermissions = async () => {
-    try {
-      const authStatus = await RNCalendarEvents.requestPermissions(false);
-      if (authStatus !== 'authorized') {
-        Alert.alert('Permission Required', 'This app requires access to your calendar to function properly.');
-      }
-    } catch (error) {
-      console.error('Error requesting calendar permissions:', error);
     }
   };
 
@@ -288,7 +184,7 @@ const App = () => {
         if (hasOutlook || hasGoogleCalendar) {
           Alert.alert('Calendar App', 'Please enable calendar sync in your Outlook or Google Calendar app settings.');
         } else {
-          Alert.alert('No Calendar App', 'No compatible calendar app found on your device.');
+          Alert.alert('No Calendar App', 'No compatible calendar app found on yourdevice.');
         }
       } else {
         Alert.alert('Calendar App', 'Calendar app found and ready to use.');
@@ -298,74 +194,14 @@ const App = () => {
     }
   };
 
-  const fetchAllEvents = async (startDate, endDate) => {
-    try {
-      if (!startDate || !endDate) {
-        throw new Error('Invalid date range for fetching events');
-      }
-      const events = await RNCalendarEvents.fetchAllEvents(
-        startDate.toISOString(),
-        endDate.toISOString()
-      );
-      return events;
-    } catch (error) {
-      console.error('Error fetching events:', error);
-      throw error;
-    }
-  };
-
-  const createEvent = async (title, startDate, endDate, location, notes) => {
-    try {
-      const eventId = await RNCalendarEvents.saveEvent(title, {
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        location: location,
-        notes: notes,
-        alarms: [
-          { date: -30 } // Reminder 30 minutes before the event
-        ],
-        ...(calendarId ? { calendarId: calendarId } : {})
-      });
-      return eventId;
-    } catch (error) {
-      console.error('Error creating event:', error);
-      throw error;
-    }
-  };
-
-  const updateEvent = async (eventId, title, startDate, endDate, location, notes) => {
-    try {
-      await RNCalendarEvents.saveEvent(title, {
-        id: eventId,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        location: location,
-        notes: notes,
-        alarms: [
-          { date: -30 } // Reminder 30 minutes before the event
-        ],
-        ...(calendarId ? { calendarId: calendarId } : {})
-      });
-      return true;
-    } catch (error) {
-      console.error('Error updating event:', error);
-      throw error;
-    }
-  };
-
-  const deleteEvent = async (eventId) => {
-    try {
-      await RNCalendarEvents.removeEvent(eventId);
-      return true;
-    } catch (error) {
-      console.error('Error deleting event:', error);
-      throw error;
-    }
-  };
-
   const handleCreateEvent = async () => {
     try {
-      const eventId = await createEvent(title, startDate, endDate, location, notes);
+      const hasPermission = await isCalendarPermissions();
+      if (!hasPermission) {
+        return;
+      }
+      
+      const eventId = await createEvent(title, startDate, endDate, location, notes, calendarId);
       if (eventId) {
         Alert.alert('Event Created', `Event created with ID: ${eventId}`);
         await syncCalendar();
@@ -383,7 +219,13 @@ const App = () => {
     }
 
     try {
-      const success = await updateEvent(selectedEvent.id, title, startDate, endDate, location, notes);
+
+      const hasPermission = await isCalendarPermissions();
+      if (!hasPermission) {
+        return;
+      }
+
+      const success = await updateEvent(selectedEvent.id, title, startDate, endDate, location, notes, calendarId);
       if (success) {
         Alert.alert('Event Updated', 'Event updated successfully');
         await syncCalendar();
@@ -401,6 +243,11 @@ const App = () => {
     }
 
     try {
+      const hasPermission = await isCalendarPermissions();
+      if (!hasPermission) {
+        return;
+      }
+
       const success = await deleteEvent(selectedEvent.id);
       if (success) {
         Alert.alert('Event Deleted', 'Event deleted successfully');
@@ -452,7 +299,11 @@ const App = () => {
               />
               <Button
                 title="Sync Calendar"
-                onPress={() => checkCalendarAppWithSync()}
+                onPress={() => {
+                  setHasError(false);
+                  checkCalendarAppWithSync()
+
+                }}
                 color="purple"
               />
               <Text>Last Sync: {lastSyncTime ? lastSyncTime.toLocaleString() : 'Never'}</Text>
@@ -522,93 +373,93 @@ const App = () => {
                 />
               )}
               <Button
-              title="Clear Form"
-              onPress={clearForm}
-            />
-          </View>
+                title="Clear Form"
+                onPress={clearForm}
+              />
+            </View>
 
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Event List</Text>
-            <Button
-              title="Fetch Events"
-              onPress={() => {
-                fetchAllEvents(new Date(), new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000))
-                  .then(fetchedEvents => {
-                    setEvents(fetchedEvents);
-                    Alert.alert('Events Fetched', `Found ${fetchedEvents.length} events`);
-                  })
-                  .catch(error => {
-                    console.error('Error fetching events:', error);
-                    Alert.alert('Error', 'Failed to fetch events');
-                  });
-              }}
-            />
-            {events.map((event, index) => (
-              <TouchableOpacity 
-                key={index} 
-                style={styles.eventItem} 
-                onPress={() => selectEvent(event)}
-              >
-                <Text style={styles.eventTitle}>{event.title}</Text>
-                <Text style={styles.eventTime}>
-                  {moment(event.startDate).format('MMMM Do YYYY, h:mm a')}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Event List</Text>
+              <Button
+                title="Fetch Events"
+                onPress={() => {
+                  fetchAllEvents(new Date(), new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000))
+                    .then(fetchedEvents => {
+                      setEvents(fetchedEvents);
+                      Alert.alert('Events Fetched', `Found ${fetchedEvents.length} events`);
+                    })
+                    .catch(error => {
+                      console.error('Error fetching events:', error);
+                      Alert.alert('Error', 'Failed to fetch events');
+                    });
+                }}
+              />
+              {events.map((event, index) => (
+                <TouchableOpacity 
+                  key={index} 
+                  style={styles.eventItem} 
+                  onPress={() => selectEvent(event)}
+                >
+                  <Text style={styles.eventTitle}>{event.title}</Text>
+                  <Text style={styles.eventTime}>
+                    {moment(event.startDate).format('MMMM Do YYYY, h:mm a')}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  </>
-);
+        </ScrollView>
+      </SafeAreaView>
+    </>
+  );
 };
 
 const styles = StyleSheet.create({
-scrollView: {
-  backgroundColor: Colors.lighter,
-},
-body: {
-  backgroundColor: Colors.white,
-},
-sectionContainer: {
-  marginTop: 32,
-  paddingHorizontal: 24,
-},
-sectionTitle: {
-  fontSize: 24,
-  fontWeight: '600',
-  color: Colors.black,
-  marginBottom: 16,
-},
-eventItem: {
-  backgroundColor: '#f0f0f0',
-  padding: 10,
-  marginBottom: 10,
-  borderRadius: 5,
-},
-eventTitle: {
-  fontSize: 16,
-  fontWeight: 'bold',
-  color: Colors.black,
-},
-eventTime: {
-  fontSize: 14,
-  color: Colors.dark,
-},
-input: {
-  height: 40,
-  borderColor: 'gray',
-  borderWidth: 1,
-  marginBottom: 10,
-  paddingHorizontal: 10,
-  color: Colors.black,
-},
-dateButton: {
-  backgroundColor: '#e0e0e0',
-  padding: 10,
-  marginBottom: 10,
-  borderRadius: 5,
-},
+  scrollView: {
+    backgroundColor: Colors.lighter,
+  },
+  body: {
+    backgroundColor: Colors.white,
+  },
+  sectionContainer: {
+    marginTop: 32,
+    paddingHorizontal: 24,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: Colors.black,
+    marginBottom: 16,
+  },
+  eventItem: {
+    backgroundColor: '#f0f0f0',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+  },
+  eventTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.black,
+  },
+  eventTime: {
+    fontSize: 14,
+    color: Colors.dark,
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+    color: Colors.black,
+  },
+  dateButton: {
+    backgroundColor: '#e0e0e0',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+  },
 });
 
 export default App;
